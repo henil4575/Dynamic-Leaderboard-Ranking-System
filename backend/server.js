@@ -16,7 +16,11 @@ const app = express();
 connectDB();
 
 // Here is the middleware
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "DELETE", "PUT"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(trackPerformance);
