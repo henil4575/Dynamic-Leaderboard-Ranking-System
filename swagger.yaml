@@ -1,0 +1,357 @@
+openapi: 3.0.0
+info:
+  title: Dynamic Leaderboard API
+  description: >
+    A real-time leaderboard REST API with ranking, statistics,
+    performance monitoring, and history tracking.
+  version: 1.0.0
+  contact:
+    name: Leaderboard Team
+
+servers:
+  - url: http://localhost:5000
+    description: Local Development Server
+
+paths:
+  /add:
+    post:
+      summary: Add or update a leaderboard entry
+      description: >
+        Adds a new player to the leaderboard or updates their score if they
+        already exist. Automatically recalculates ranks, percentiles, badges,
+        and score velocity for all players.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - score
+              properties:
+                username:
+                  type: string
+                  example: ironman
+                score:
+                  type: number
+                  example: 9800
+      responses:
+        '201':
+          description: Entry added or updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Entry saved successfully.
+                  data:
+                    $ref: '#/components/schemas/Entry'
+        '400':
+          description: Bad request - missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /remove:
+    delete:
+      summary: Remove a leaderboard entry
+      description: >
+        Removes a player from the leaderboard by username and
+        recalculates all ranks automatically.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+                  example: ironman
+      responses:
+        '200':
+          description: Entry removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Entry for "ironman" removed.
+        '400':
+          description: Username is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /leaderboard:
+    get:
+      summary: Get top 10 leaderboard entries
+      description: >
+        Returns the top 10 players sorted by score in descending order.
+        Includes rank, badge, score velocity, and percentile rank.
+      responses:
+        '200':
+          description: Top 10 leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    example: 10
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+
+  /info:
+    get:
+      summary: Get statistics for all entries
+      description: >
+        Returns comprehensive quantitative statistics for all leaderboard
+        entries including mean, median, quartiles, standard deviation,
+        IQR, min, max, and score distribution.
+      responses:
+        '200':
+          description: Statistics object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  stats:
+                    $ref: '#/components/schemas/Stats'
+
+  /performance:
+    get:
+      summary: Get API endpoint performance metrics
+      description: >
+        Returns average response time and total request count
+        for each API endpoint tracked since server start.
+      responses:
+        '200':
+          description: Performance metrics per endpoint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  performance:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        avgResponseTimeMs:
+                          type: number
+                          example: 45.231
+                        totalRequests:
+                          type: integer
+                          example: 12
+
+  /history:
+    get:
+      summary: Get submission history with optional filters
+      description: >
+        Returns full submission history sorted by latest update.
+        Supports optional filtering by username, date range (from/to).
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+          description: Filter by specific username
+          example: ironman
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Filter entries from this date
+          example: "2026-04-17T00:00:00Z"
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Filter entries up to this date
+          example: "2026-04-18T00:00:00Z"
+      responses:
+        '200':
+          description: Filtered history entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    example: 7
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HistoryEntry'
+
+components:
+  schemas:
+    Entry:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 661f1e2a3b4c5d6e7f8a9b0c
+        username:
+          type: string
+          example: ironman
+        score:
+          type: number
+          example: 9800
+        rank:
+          type: integer
+          example: 1
+        percentileRank:
+          type: number
+          example: 95.5
+        velocity:
+          type: number
+          example: 800
+        tag:
+          type: string
+          example: "Legend"
+        submissionCount:
+          type: integer
+          example: 3
+        lastSubmittedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        username:
+          type: string
+          example: ironman
+        score:
+          type: number
+          example: 9800
+        rank:
+          type: integer
+          example: 1
+        percentileRank:
+          type: number
+          example: 95.5
+        velocity:
+          type: number
+          example: 800
+        tag:
+          type: string
+          example: "Legend"
+
+    Stats:
+      type: object
+      properties:
+        totalEntries:
+          type: integer
+          example: 7
+        mean:
+          type: number
+          example: 2500.43
+        median:
+          type: number
+          example: 1700
+        q1:
+          type: number
+          example: 1200
+        q3:
+          type: number
+          example: 3000
+        stdDev:
+          type: number
+          example: 987.65
+        min:
+          type: number
+          example: 300
+        max:
+          type: number
+          example: 10000
+        iqr:
+          type: number
+          example: 1800
+        scoreDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            "300-2240": 4
+            "2241-4181": 2
+            "4182-6122": 0
+            "6123-8063": 0
+            "8064-10004": 1
+
+    HistoryEntry:
+      type: object
+      properties:
+        username:
+          type: string
+          example: ironman
+        score:
+          type: number
+          example: 9800
+        velocity:
+          type: number
+          example: 800
+        submissionCount:
+          type: integer
+          example: 3
+        lastSubmittedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Username and score are required.
