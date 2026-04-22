@@ -144,11 +144,13 @@ docker-compose up --build
 
 ## Team
 
-1. Bhavya Parekh
+1. Bhavya Parekh 
 2. Nirav Chauhan
 3. Henil Patel
+
+
    
-Built at **Luddy Hacks Hackathon 2026**
+Built at **Luddy Hacks Hackathon 2026 at Indiana University Bloomington**
 
 ---
 
